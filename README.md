@@ -1,71 +1,150 @@
-# 🧠 AI Resume Analyzer
+# 🧠 AI-Powered Resume Analyzer
 
-A simple AI-powered web app that analyzes how well your resume matches a given job description using NLP techniques. Built with **Python** and **Streamlit**, the app provides a relevance score (in %) and highlights matched and missing keywords to help tailor your resume for better job targeting.
+### *ATS-Style Resume Intelligence & Skill Gap Analysis System*
 
----
+An **industry-inspired, ATS-style resume screening system** that evaluates how well a candidate’s resume aligns with a job description using **Natural Language Processing (NLP)** and **explainable scoring logic**.
 
-## 🚀 Features
+This project simulates **real-world automated resume screening** used by recruiters and applicant tracking systems by combining **semantic matching**, **skill coverage analysis**, and **experience signal detection**.
 
-- 📄 Upload your **resume (PDF format)**
-- 📋 Paste the **job description**
-- 🧠 Text preprocessing using **NLTK** (stopwords removal, cleaning)
-- 📊 **TF-IDF + Cosine Similarity** for resume–JD matching
-- ✅ Shows a **relevance match score (%)**
-- 📈 **Green progress bar** visualization
-- 🔍 Displays **matched keywords**
-- ❗ Highlights **missing keywords** from the job description
-- 💡 Resume improvement suggestions
+## 🚀 Why This Project Matters
 
----
+Modern hiring pipelines rely heavily on **Applicant Tracking Systems (ATS)** to filter resumes before human review.
+
+This project is designed to:
+
+* Mimic how ATS tools score and rank resumes
+* Explain *why* a resume passes or fails screening
+* Identify **high-impact skill gaps**
+* Provide **recruiter-facing insights**, not just raw scores
+
+It goes beyond a single similarity metric and instead produces a **multi-signal hiring evaluation**.
+
+## 🎯 Key Capabilities
+
+* 📄 **PDF Resume Parsing** using PyMuPDF
+* 🧠 **Text Normalization & Cleaning** using NLTK
+* 🔍 **Semantic Resume–JD Matching** using TF-IDF & Cosine Similarity
+* 🧩 **Skill Gap & Coverage Analysis**
+* 🧠 **Experience Signal Detection** (action-oriented language)
+* 🏆 **Weighted ATS-Style Scoring System**
+* 📌 **Recruiter-Oriented Screening Decisions**
+* 💡 **Explainable Resume Optimization Insights**
+
+## 🧮 ATS-Style Scoring Logic
+
+Instead of relying on a single similarity score, the system computes a **composite ATS score** using weighted signals:
+
+```
+Final ATS Score =
+  50% Semantic Match Score
++ 30% Skill Coverage Score
++ 20% Experience Signal Score
+```
+
+### What This Means:
+
+* **Semantic Match** evaluates how closely resume language mirrors the job description
+* **Skill Coverage** measures how many role-critical skills are present
+* **Experience Signal** detects action-driven, impact-oriented resume language
+
+This mirrors how real ATS systems rank candidates.
+
+## 📊 Output & Insights
+
+The system produces:
+
+* Overall ATS relevance score (%)
+* Breakdown of semantic match, skill coverage, and experience signals
+* Matched vs missing high-impact keywords
+* Recruiter-style screening outcomes:
+
+  * Likely to advance
+  * Borderline candidate
+  * Likely filtered out
+* Actionable, explainable recommendations for resume optimization
 
 ## 🛠️ Tech Stack
 
-- Python
-- Streamlit
-- scikit-learn (TF-IDF, Cosine Similarity)
-- NLTK (stopwords)
-- PyMuPDF (resume PDF parsing)
+* **Python**
+* **Streamlit** (UI & deployment)
+* **scikit-learn** (TF-IDF, Cosine Similarity)
+* **NLTK** (stopword removal, preprocessing)
+* **PyMuPDF** (PDF resume extraction)
+* **Pandas** (analysis & reporting)
 
 ## 📂 Project Structure
 
-ai_resume_analyzer/
-
-├── app.py
-
-├── requirements.txt
-
-├── README.md
-
+```
+AI-Powered-Resume-Analyzer/
+│
+├── app.py              # Main ATS-style resume analysis engine
+├── requirements.txt    # Project dependencies
+├── README.md           # Project documentation
+├── Example.png         # Sample UI screenshot
 └── .gitignore
+```
 
 ## 🧪 How to Run Locally
 
-1. Clone the repository  
-   ```bash
-   git clone https://github.com/YashJadhav100/AI-Resume-Analyser.git
-   cd AI-Resume-Analyser
-   
-2. Create and activate a virtual environment 
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate
+### 1️⃣ Clone the Repository
 
-4. Install dependencies
-   ```bash
-   pip install -r requirements.txt
+```bash
+git clone https://github.com/YashJadhav100/AI-Powered-Resume-Analyzer.git
+cd AI-Powered-Resume-Analyzer
+```
 
-6. Download NLTK stopwords
-   ```bash
-   import nltk
-   nltk.download('stopwords')
+### 2️⃣ Create Virtual Environment
 
-8. Run the app
-   ```bash
-   streamlit run app.py
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
 
-🌐 Deployment
-You can deploy this project for free using Streamlit Cloud. Just connect your GitHub repo and click "Deploy".
+### 3️⃣ Install Dependencies
 
-✍️ Author
-Made with 💻 by Yash Jadhav
-Master's in Computer Science | Syracuse University
+```bash
+pip install -r requirements.txt
+```
+
+### 4️⃣ Run the Application
+
+```bash
+streamlit run app.py
+```
+
+The app will open in your browser at:
+
+```
+http://localhost:8501
+```
+
+## 🌐 Deployment
+
+This project can be deployed for free using **Streamlit Cloud**:
+
+1. Connect your GitHub repository
+2. Select `app.py` as the entry point
+3. Click **Deploy**
+
+## 🧠 What This Project Demonstrates to Recruiters
+
+* Practical application of NLP in hiring workflows
+* Understanding of ATS screening logic
+* Explainable AI decision-making
+* Production-aware engineering
+* Ability to translate ML outputs into business insights
+
+This is not a toy ML project.
+It is a **resume intelligence system** designed with real hiring pipelines in mind.
+
+## 🔮 Future Enhancements
+
+* Sentence-BERT or SBERT for deeper semantic matching
+* Section-wise scoring (Skills vs Experience vs Projects)
+* Resume rewrite suggestions powered by LLMs
+* Skill importance weighting by role seniority
+* Visual analytics dashboards
+
+## ✍️ Author
+**Yash Jadhav**
+Master’s in Computer Science – Syracuse University
