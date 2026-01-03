@@ -1,66 +1,129 @@
 import streamlit as st
 import fitz  # PyMuPDF
 import string
+import nltk
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import nltk
-nltk.download('stopwords')
+import pandas as pd
 
-st.set_page_config(page_title="AI Resume Analyzer", layout="centered")
+# ------------------ CONFIG ------------------
+st.set_page_config(
+    page_title="AI Resume Analyzer",
+    layout="centered"
+)
+
 st.title("📄 AI-Powered Resume Analyzer")
+st.caption("Smart resume-to-job matching using NLP & ML")
 
-# Upload resume
-uploaded_file = st.file_uploader("Upload your Resume (PDF)", type=["pdf"])
+# ------------------ NLP SETUP ------------------
+@st.cache_resource
+def load_stopwords():
+    nltk.download("stopwords")
+    return set(stopwords.words("english"))
 
-# Paste Job Description
-job_description = st.text_area("Paste the Job Description here")
+STOP_WORDS = load_stopwords()
 
+# ------------------ FUNCTIONS ------------------
 def clean_text(text):
     text = text.lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))  # remove punctuation
-    words = text.split()
-    words = [word for word in words if word not in stopwords.words('english')]
-    return ' '.join(words)
+    text = text.translate(str.maketrans("", "", string.punctuation))
+    words = [w for w in text.split() if w not in STOP_WORDS and len(w) > 2]
+    return " ".join(words)
 
-def extract_keywords(text, top_n=15):
-    vectorizer = TfidfVectorizer(stop_words='english', max_features=top_n)
-    tfidf_matrix = vectorizer.fit_transform([text])
-    return set(vectorizer.get_feature_names_out())
-
-if uploaded_file and job_description:
+def extract_text_from_pdf(uploaded_file):
+    text = ""
     with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
-        resume_text = ""
         for page in doc:
-            resume_text += page.get_text()
+            text += page.get_text()
+    return text
 
-    st.subheader("✅ Extracted Resume Text:")
-    st.write(resume_text[:1000])  # show preview
+def get_similarity(resume, jd):
+    vectorizer = TfidfVectorizer(
+        ngram_range=(1, 2),
+        max_features=3000
+    )
+    tfidf = vectorizer.fit_transform([resume, jd])
+    score = cosine_similarity(tfidf[0], tfidf[1])[0][0]
+    return round(score * 100, 2), vectorizer.get_feature_names_out(), tfidf.toarray()
+
+def keyword_analysis(feature_names, tfidf_matrix):
+    resume_weights = tfidf_matrix[0]
+    jd_weights = tfidf_matrix[1]
+
+    keywords = pd.DataFrame({
+        "keyword": feature_names,
+        "resume_score": resume_weights,
+        "jd_score": jd_weights
+    })
+
+    keywords["gap"] = keywords["jd_score"] - keywords["resume_score"]
+
+    matched = keywords[(keywords.resume_score > 0) & (keywords.jd_score > 0)]
+    missing = keywords[(keywords.jd_score > 0) & (keywords.resume_score == 0)]
+
+    return matched.sort_values("jd_score", ascending=False), \
+           missing.sort_values("jd_score", ascending=False)
+
+# ------------------ INPUT ------------------
+uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
+job_description = st.text_area("Paste Job Description", height=200)
+
+# ------------------ PROCESS ------------------
+if uploaded_file and job_description:
+
+    resume_text = extract_text_from_pdf(uploaded_file)
+
+    with st.expander("📄 Resume Preview"):
+        st.write(resume_text[:1500] + "...")
 
     clean_resume = clean_text(resume_text)
     clean_jd = clean_text(job_description)
 
-    # TF-IDF and cosine similarity
-    vectorizer = TfidfVectorizer()
-    vectors = vectorizer.fit_transform([clean_resume, clean_jd])
-    similarity_score = cosine_similarity(vectors[0], vectors[1])[0][0]
-    relevance_percent = round(similarity_score * 100, 2)
+    relevance_score, features, tfidf_matrix = get_similarity(clean_resume, clean_jd)
 
-    # Show score
-    st.subheader("📊 Resume Relevance Score")
-    st.write(f"**Your resume is {relevance_percent}% relevant to this job description.**")
-    st.progress(int(relevance_percent))
+    # ------------------ SCORE ------------------
+    st.subheader("📊 Resume Match Score")
+    st.metric("Relevance Score", f"{relevance_score}%")
+    st.progress(int(relevance_score))
 
-    # Show keywords
-    resume_keywords = extract_keywords(clean_resume, top_n=15)
-    jd_keywords = extract_keywords(clean_jd, top_n=15)
-    matched_keywords = resume_keywords & jd_keywords
-    missing_keywords = jd_keywords - resume_keywords
+    if relevance_score >= 75:
+        st.success("Strong match. Resume is well-aligned with the role.")
+    elif relevance_score >= 50:
+        st.warning("Moderate match. Some optimization recommended.")
+    else:
+        st.error("Low match. Resume needs targeted improvements.")
 
-    st.subheader("✅ Matched Keywords")
-    st.write(', '.join(matched_keywords) if matched_keywords else "None matched.")
+    # ------------------ KEYWORDS ------------------
+    matched, missing = keyword_analysis(features, tfidf_matrix)
 
-    st.subheader("❌ Missing Keywords from JD")
-    st.write(', '.join(missing_keywords) if missing_keywords else "No critical keywords missing!")
+    st.subheader("✅ Strongly Matched Skills")
+    if not matched.empty:
+        st.dataframe(matched.head(10)[["keyword"]])
+    else:
+        st.write("No strong keyword overlap found.")
 
-    st.info("💡 Consider adding the missing keywords above to your resume to increase relevance.")
+    st.subheader("❌ High-Impact Missing Skills")
+    if not missing.empty:
+        st.dataframe(missing.head(10)[["keyword"]])
+    else:
+        st.success("No critical skills missing!")
+
+    # ------------------ INSIGHTS ------------------
+    st.subheader("🧠 Resume Improvement Insights")
+
+    insights = []
+    if len(missing) > 8:
+        insights.append("Your resume lacks several high-impact role-specific skills.")
+    if relevance_score < 60:
+        insights.append("Consider tailoring your experience bullets to mirror the job description language.")
+    if "experience" not in clean_resume:
+        insights.append("Resume may be missing explicit experience-based phrasing.")
+
+    if insights:
+        for tip in insights:
+            st.info("💡 " + tip)
+    else:
+        st.success("Your resume is well-optimized for this role.")
+
+    st.caption("Built with NLP, TF-IDF, and cosine similarity | Interview-grade project")
